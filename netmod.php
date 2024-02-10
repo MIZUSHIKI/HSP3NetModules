@@ -1,6 +1,6 @@
 <?php
 //------------------------------------------------------------------------------
-// HSP3NetModules (netmod.php)                                          Ver.1.0 
+// HSP3NetModules (netmod.php)                                          Ver.1.1 
 //------------------------------------------------------------------------------
 error_reporting(E_ALL & ~E_NOTICE);
 
@@ -25,6 +25,7 @@ do{ //処理開始
 
 //$request ==
 // 'data'
+// 'html'
 // 'post'
 // 'delete'
 
@@ -33,6 +34,13 @@ if($request == 'data') {
 	if( Get_ModulesData($data) ){
 		echo $data;
 	}//失敗したときはGet_ModulesData()の中でエラー詳細をechoしている
+	break;
+
+//すべての登録情報をHTMLとして返す
+}else if($request == 'html') {
+	if( Get_ModulesHtml($html) ){
+		echo $html;
+	}//失敗したときはGet_ModulesHtml()の中でエラー詳細をechoしている
 	break;
 
 //データ登録
@@ -75,6 +83,27 @@ function Get_ModulesData(&$data){
 	}
 	$data = file_get_contents(DataFileName);
 	$data = preg_replace('/{{JSON(.*?)JSON}}/','',$data); //後々、指定データを残すオプションを考えるかも。
+	return TRUE;
+}
+function Get_ModulesHtml(&$html){
+	//データファイル確認
+	if( !file_exists(DataFileName) ){
+		echo 'false: '.NotFound_Datafile.';';
+		return FALSE;
+	}
+	$html = file_get_contents(DataFileName);
+	$html = preg_replace('/{{JSON(.*?)JSON}}/','',$html); //後々、指定データを残すオプションを考えるかも。
+	
+	$html = preg_replace('/\r\n/',"<br>\n",$html);
+	$html = preg_replace('/\t/'," - ",$html);
+	$html = '<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>HSP3NetModules</title>
+</head>
+<body>' . $html . '</body>
+</html>';
 	return TRUE;
 }
 function Register_PostModule($hsp){
@@ -207,7 +236,7 @@ function curl_get($url, &$buf){
     return $header['http_code'];
 }
 function DevideRepMod($hsp, &$repName, &$modName){
-	if( !preg_match('/\.(?:hsp|as)$/', $hsp, $matches) ){
+	if( !preg_match('/\.(?:hsp|as|dll|hpi)$/', $hsp, $matches) ){
 		return FALSE;
 	}
 	if( !preg_match('|^([\w/%#$()~+-.]+/)([\w%#$()~+-.]+)$|', $hsp, $matches) ){
